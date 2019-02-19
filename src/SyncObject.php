@@ -25,7 +25,7 @@
 namespace CEE\Salesforce;
 
 use SalesforceSyncException;
-use Davispeixoto\Laravel5SalesforceSalesforce\Salesforce;
+use Davispeixoto\Laravel5Salesforce\Salesforce;
 
 class SyncObject
 {
