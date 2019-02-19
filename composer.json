@@ -1,0 +1,25 @@
+{
+    "name": "jwilson-cee/salesforce-sync",
+    "description": "Package for syncing Salesforce objects with local data",
+    "keywords": [
+        "laravel",
+        "salesforce",
+        "force.com toolkit",
+        "laravel 5"
+    ],
+    "authors": [
+        {
+            "name": "John Wilson",
+            "email": "jwilson@mncee.org"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "CEE\\Salesforce\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "require": {
+        "davispeixoto/laravel5-salesforce": "1.0.*"
+    }
+}
