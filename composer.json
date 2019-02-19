@@ -1,5 +1,5 @@
 {
-    "name": "cee/salesforce-sync",
+    "name": "mncee/salesforce-sync",
     "description": "Package for syncing Salesforce objects with local data",
     "keywords": [
         "laravel",
