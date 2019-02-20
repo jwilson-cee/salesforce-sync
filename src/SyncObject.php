@@ -333,6 +333,12 @@ class SyncObject
 		return null;
 	}
 
+	/**
+	 * Delete remote Salesforce objects
+	 *
+	 * @param array $ids
+	 * @return array|null
+	 */
 	public function delete($ids=null) {
 		$ids = is_array($ids) ? $ids : [$this->push_Id()];
 		return count($ids) ? static::validateResult(Salesforce::delete($ids)) : null;
