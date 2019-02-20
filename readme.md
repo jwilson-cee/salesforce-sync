@@ -2,6 +2,8 @@
 
 This package is for syncing Salesforce objects with local data. It's an extension of Davis Peixoto's [Laravel 5 Salesforce](https://github.com/davispeixoto/Laravel-5-Salesforce) package.
 
+Works with [Laravel 5.2](https://laravel.com/docs/) and up.
+
 ## Installation
 
 This package can be installed via [Composer](http://getcomposer.org) by requiring the
@@ -33,7 +35,7 @@ Find the `providers` key and `aliases` key in your `config/app.php` and add thes
     )
 ```
 
-The you must include the following environment variables in the `.env` file:
+Then you must include the following environment variables in the `.env` file:
 ```
 SALESFORCE_USERNAME=#your salesfore username#
 SALESFORCE_PASSWORD=#your salesfore password#
@@ -41,7 +43,7 @@ SALESFORCE_TOKEN=#your salesfore token#
 SALESFORCE_WSDL=#path to the wsdl stored in the storage/app/ directory#
 ```
 
-Place your [your **enterprise** WSDL file](https://www.salesforce.com/us/developer/docs/api/Content/sforce_api_quickstart_steps_generate_wsdl.htm) into your app `storage/app/` directory you specified in the env file.
+Place your [your **Enterprise** WSDL file](https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_quickstart_steps_generate_wsdl.htm) into your app `storage/app/` directory you specified in the `.env` file.
 
 **IMPORTANT:** the PHP Force.com Toolkit for PHP only works with Enterprise WSDL
 
@@ -85,11 +87,17 @@ The `pull_...($value)` functions will have an argument containing the value corr
 
 It is not required to have both a `push_...()` and a `pull_...()` function for a given Salesforce field. Either or both can be used according to what is needed for syncing in either direction.
 
-### Static `objectName()` function and channing usage
+### Static `objectName()` function and chaining usage
 
 This class can also be used on it's own using the chaining functions:
 ```PHP
-SyncObject::objectName('Contact')->id('00A10000001aBCde')->pushFields(['FirstName' => 'John', 'LastName' => 'Doe'])->push();
-
-$salesforceContact = SyncObject::objectName('Contact')->id('00A10000001aBCde')->pullFields(['FirstName', 'LastName'])->pull();
+SyncObject::objectName('Contact')
+	->id('00A10000001aBCde')
+	->pushFields(['FirstName' => 'John', 'LastName' => 'Doe'])
+	->push();
+	
+$salesforceContact = SyncObject::objectName('Contact')
+	->id('00A10000001aBCde')
+	->pullFields(['FirstName', 'LastName'])
+	->pull();
 ```
