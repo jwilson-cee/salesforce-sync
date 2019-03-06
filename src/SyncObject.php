@@ -24,7 +24,6 @@
 
 namespace CEE\Salesforce;
 
-use SalesforceSyncException;
 use Salesforce;
 
 class SyncObject
