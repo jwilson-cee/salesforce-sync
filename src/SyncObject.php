@@ -89,6 +89,13 @@ class SyncObject
 	 */
 	public $fieldsToNull = [];
 
+	/**
+	 * The number of tries the push action should take
+	 *
+	 * @var int
+	 */
+	public $retryLimit = 0;
+
 	private $_remoteObject;
 
 	/**
@@ -115,7 +122,7 @@ class SyncObject
 	/**
 	 * Chaining function to set the Salesforce object id
 	 *
-	 * @param $id
+	 * @param string $id
 	 * @return $this
 	 */
 	public function id($id) {
@@ -259,7 +266,7 @@ class SyncObject
 	/**
 	 * Returns an object fetched from the remote Salesforce object
 	 *
-	 * @param null $id
+	 * @param string $id
 	 * @return null|\stdClass
 	 */
 	public function remoteObject($id=null) {
@@ -293,13 +300,13 @@ class SyncObject
 				}
 				$result = [];
 				if($updateObjects->count()) {
-					$result['updated'] = static::validateResult(Salesforce::update($updateObjects->toArray(), $this->objectName));
+					$result['updated'] = static::attemptSync('update', $this->objectName, $updateObjects->toArray(), $this->retryLimit);
 					if(!$createObjects->count()) {
 						return $result['updated'];
 					}
 				}
 				if($createObjects->count()) {
-					$result['created'] = static::validateResult(Salesforce::create($createObjects->toArray(), $this->objectName));
+					$result['created'] = static::attemptSync('create', $this->objectName, $createObjects->toArray(), $this->retryLimit);
 					if(!$updateObjects->count()) {
 						return $result['created'];
 					}
@@ -346,7 +353,7 @@ class SyncObject
 	/**
 	 * Check if a Salesforce SaveResult has all successful responses
 	 *
-	 * @param $result
+	 * @param array $result
 	 * @return bool
 	 */
 	public static function isSuccessfulResult($result) {
@@ -354,7 +361,7 @@ class SyncObject
 			return false;
 		}
 		foreach($result as $response) {
-			if(!$response->success) {
+			if(!isset($response->success) || !$response->success) {
 				return false;
 			}
 		}
@@ -364,7 +371,7 @@ class SyncObject
 	/**
 	 * Throw an exception if a Salesforce SaveResult is not successful
 	 *
-	 * @param $result
+	 * @param array $result
 	 * @return array
 	 * @throws SalesforceSyncException
 	 */
@@ -373,6 +380,57 @@ class SyncObject
 			throw new SalesforceSyncException($result);
 		}
 		return $result;
+	}
+
+	/**
+	 * Attempt a Salesforce sync action. Repeat the action if the error is an object lock or network issue.
+	 *
+	 * @param string $action
+	 * @param string $objectName
+	 * @param array $objects
+	 * @param int $retryLimit
+	 * @param array $attempts
+	 * @return array
+	 * @throws SalesforceSyncException
+	 */
+	public static function attemptSync($action, $objectName, $objects, $retryLimit=10, $attempts=[]) {
+		$result = Salesforce::$action($objects, $objectName);
+		if(!$retryLimit) {
+			return static::validateResult($result);
+		}
+		if(!static::isSuccessfulResult($result)) {
+			if(count($attempts) + 1 < $retryLimit) {
+				if(static::resultHasErrorCode($result, ['UNABLE_TO_LOCK_ROW', 'REQUEST_RUNNING_TOO_LONG'])) {
+					$attempts[] = $result;
+					return static::attemptSync($action, $objectName, $objects, $retryLimit, $attempts);
+				}
+			}
+			throw new SalesforceSyncException($result, $attempts);
+		}
+		return $result;
+	}
+
+	/**
+	 * Check to see if a Salesforce SaveResult has a specific error code or codes
+	 *
+	 * @param array $result
+	 * @param string|array $code
+	 * @return bool
+	 */
+	public static function resultHasErrorCode($result, $code) {
+		$codes = is_array($code) ? $code : [$code];
+		if(is_array($result) && count($codes)) {
+			foreach($result as $response) {
+				if(isset($response->errors) && is_array($response->errors)) {
+					foreach($response->errors as $error) {
+						if(in_array($error->statusCode, $codes)) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	/**
