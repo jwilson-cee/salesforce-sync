@@ -410,7 +410,7 @@ class SyncObject
 			return static::validateResult($result);
 		}
 		if(!static::isSuccessfulResult($result)) {
-			if(count($attempts) + 1 < $retryLimit) {
+			if(count($attempts) < $retryLimit) {
 				if(static::resultHasErrorCode($result, ['UNABLE_TO_LOCK_ROW', 'REQUEST_RUNNING_TOO_LONG'])) {
 					$attempts[] = $result;
 					return static::attemptSync($action, $objectName, $objects, $retryLimit, $attempts);
