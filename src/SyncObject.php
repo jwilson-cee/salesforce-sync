@@ -90,11 +90,11 @@ class SyncObject
 	public $fieldsToNull = [];
 
 	/**
-	 * The number of tries the push action should take
+	 * The number of tries the push action should take when failing
 	 *
 	 * @var int
 	 */
-	public $retryLimit = 0;
+	public $retry = 0;
 
 	private $_remoteObject;
 
@@ -162,6 +162,17 @@ class SyncObject
 	 */
 	public function fieldsToNull($fieldNames) {
 		$this->fieldsToNull = $fieldNames;
+		return $this;
+	}
+
+	/**
+	 * Chaining function to set the retry limit for the push actions
+	 *
+	 * @param int $limit
+	 * @return $this
+	 */
+	public function retry($limit=10) {
+		$this->retry = $limit;
 		return $this;
 	}
 
@@ -300,13 +311,13 @@ class SyncObject
 				}
 				$result = [];
 				if($updateObjects->count()) {
-					$result['updated'] = static::attemptSync('update', $this->objectName, $updateObjects->toArray(), $this->retryLimit);
+					$result['updated'] = static::attemptSync('update', $this->objectName, $updateObjects->toArray(), $this->retry);
 					if(!$createObjects->count()) {
 						return $result['updated'];
 					}
 				}
 				if($createObjects->count()) {
-					$result['created'] = static::attemptSync('create', $this->objectName, $createObjects->toArray(), $this->retryLimit);
+					$result['created'] = static::attemptSync('create', $this->objectName, $createObjects->toArray(), $this->retry);
 					if(!$updateObjects->count()) {
 						return $result['created'];
 					}
