@@ -166,6 +166,23 @@ class SyncObject
 	}
 
 	/**
+	 * Chaining function to manually set the remote object to be pulled. The $pullOnlyFields will be set to the keys of $object.
+	 *
+	 * @param \stdClass|array $object
+	 * @return $this
+	 */
+	public function withRemoteObject($object) {
+		if(is_array($object)) {
+			$this->pullOnlyFields = array_keys($object);
+			$object = (object) $object;
+		} else {
+			$this->pullOnlyFields = array_keys(get_object_vars($object));
+		}
+		$this->_remoteObject = $object;
+		return $this;
+	}
+
+	/**
 	 * Chaining function to set the retry limit for the push actions
 	 *
 	 * @param int $limit
@@ -297,6 +314,7 @@ class SyncObject
 	 *
 	 * @param array $objects
 	 * @return null|array
+	 * @throws SalesforceSyncException
 	 */
 	public function push($objects=null) {
 		if($this->objectName) {
@@ -355,6 +373,7 @@ class SyncObject
 	 *
 	 * @param array $ids
 	 * @return array|null
+	 * @throws SalesforceSyncException
 	 */
 	public function delete($ids=null) {
 		$ids = is_array($ids) ? $ids : [$this->push_Id()];
