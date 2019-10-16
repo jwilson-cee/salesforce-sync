@@ -424,13 +424,22 @@ class SyncObject
 	 * @throws SalesforceSyncException
 	 */
 	public static function attemptSync($action, $objectName, $objects, $retryLimit=10, $attempts=[]) {
-		$result = Salesforce::$action($objects, $objectName);
+		try {
+			$result = Salesforce::$action($objects, $objectName);
+		} catch(\SoapFault $exception) {
+			$error = new \stdClass();
+			$error->statusCode = 'SOAP_FAULT';
+			$result = new \stdClass();
+			$result->success = false;
+			$result->errors = [$error];
+			$result->message = $exception->faultstring;
+		}
 		if(!$retryLimit) {
 			return static::validateResult($result);
 		}
 		if(!static::isSuccessfulResult($result)) {
 			if(count($attempts) < $retryLimit) {
-				if(static::resultHasErrorCode($result, ['UNABLE_TO_LOCK_ROW', 'REQUEST_RUNNING_TOO_LONG'])) {
+				if(static::resultHasErrorCode($result, ['UNABLE_TO_LOCK_ROW', 'REQUEST_RUNNING_TOO_LONG', 'SOAP_FAULT'])) {
 					$attempts[] = $result;
 					return static::attemptSync($action, $objectName, $objects, $retryLimit, $attempts);
 				}
