@@ -28,18 +28,18 @@ class SalesforceSyncException extends Exception
 	 */
 	public function getErrorMessage() {
 		$errorMessage = '';
-		if(is_array($this->result)) {
-			foreach($this->result as $result) {
-				$errorMessage .= isset($result->id) ? 'Id: '.$result->id.' ' : '';
-				if(isset($result->errors) && is_array($result->errors)) {
-					foreach($result->errors as $error) {
-						$fields = isset($error->fields) && is_array($error->fields) && count($error->fields) ? ' (Fields: '.implode(', ', $error->fields).')' : '';
-						$errorMessage .= isset($error->statusCode) ? 'Code: '.$error->statusCode.' - ' : '';
-						$errorMessage .= isset($error->message) ? $error->message.$fields.'; ' : '';
-					}
+		$results = is_array($this->result) ? $this->result : [$this->result];
+		foreach($results as $result) {
+			$errorMessage .= isset($result->message) ? $result->message.PHP_EOL : '';
+			$errorMessage .= isset($result->id) ? 'Id: '.$result->id.' ' : '';
+			if(isset($result->errors) && is_array($result->errors)) {
+				foreach($result->errors as $error) {
+					$fields = isset($error->fields) && is_array($error->fields) && count($error->fields) ? ' (Fields: '.implode(', ', $error->fields).')' : '';
+					$errorMessage .= isset($error->statusCode) ? 'Code: '.$error->statusCode.' - ' : '';
+					$errorMessage .= isset($error->message) ? $error->message.$fields.'; ' : '';
 				}
-				$errorMessage .= PHP_EOL;
 			}
+			$errorMessage .= PHP_EOL;
 		}
 		if(count($this->attempts)) {
 			$errorMessage .= count($this->attempts).' Attempts:'.PHP_EOL;
