@@ -480,7 +480,7 @@ class SyncObject
 	 * @return string
 	 */
 	public static function valueToNumber($value, $precision = 0) {
-		return empty($value) ? null : number_format(floatval($value), $precision, '.', '');
+		return empty($value) && !is_numeric($value) ? null : number_format(floatval($value), $precision, '.', '');
 	}
 
 }
