@@ -265,10 +265,12 @@ class SyncObject
 		$object->Id = $this->push_Id();
 		if(count($this->pushFields)) {
 			foreach($this->pushFields as $fieldName => $value) {
-				if(isset($value)) {
-					$object->{$fieldName} = $value;
-				} else if(isset($object->Id)) {
-					$object->fieldsToNull[] = $fieldName;
+				if($value !== self::IGNORE_VALUE) {
+					if(isset($value)) {
+						$object->{$fieldName} = $value;
+					} else if(isset($object->Id)) {
+						$object->fieldsToNull[] = $fieldName;
+					}
 				}
 			}
 		} else {
