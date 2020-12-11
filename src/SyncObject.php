@@ -331,13 +331,13 @@ class SyncObject
 				}
 				$result = [];
 				if($updateObjects->count()) {
-					$result['updated'] = static::attemptSync('update', $this->objectName, $updateObjects->toArray(), $this->retry);
+					$result['updated'] = $this->attemptSalesforceSync('update', $updateObjects->toArray());
 					if(!$createObjects->count()) {
 						return $result['updated'];
 					}
 				}
 				if($createObjects->count()) {
-					$result['created'] = static::attemptSync('create', $this->objectName, $createObjects->toArray(), $this->retry);
+					$result['created'] = $this->attemptSalesforceSync('create', $createObjects->toArray());
 					if(!$updateObjects->count()) {
 						return $result['created'];
 					}
@@ -385,14 +385,15 @@ class SyncObject
 	/**
 	 * Check if a Salesforce SaveResult has all successful responses
 	 *
-	 * @param array $result
+	 * @param array|\stdClass $result
 	 * @return bool
 	 */
 	public static function isSuccessfulResult($result) {
 		if(empty($result) || (is_array($result) && count($result) === 0)) {
 			return false;
 		}
-		foreach($result as $response) {
+		$results = is_array($result) ? $result : [$result];
+		foreach($results as $response) {
 			if(!isset($response->success) || !$response->success) {
 				return false;
 			}
@@ -403,31 +404,44 @@ class SyncObject
 	/**
 	 * Throw an exception if a Salesforce SaveResult is not successful
 	 *
-	 * @param array $result
+	 * @param array|\stdClass $result
+	 * @param SyncObject $syncObject
+	 * @param array $objects
 	 * @return array
 	 * @throws SalesforceSyncException
 	 */
-	public static function validateResult($result) {
+	public static function validateResult($result, $syncObject=null, $objects=null) {
 		if(!static::isSuccessfulResult($result)) {
-			throw new SalesforceSyncException($result);
+			throw new SalesforceSyncException($result, $syncObject, $objects);
 		}
 		return $result;
+	}
+	/**
+	 * Static version of attemptSalesforceSync()
+	 *
+	 * @param string $action
+	 * @param string $objectName
+	 * @param array $objects
+	 * @param int $retryLimit
+	 * @return mixed
+	 * @throws SalesforceSyncException
+	 */
+	public static function attemptSync($action, $objectName, $objects, $retryLimit=10) {
+		return SyncObject::objectName($objectName)->retry($retryLimit)->attemptSalesforceSync($action, $objects);
 	}
 
 	/**
 	 * Attempt a Salesforce sync action. Repeat the action if the error is an object lock or network issue.
 	 *
 	 * @param string $action
-	 * @param string $objectName
 	 * @param array $objects
-	 * @param int $retryLimit
 	 * @param array $attempts
-	 * @return array
+	 * @return mixed
 	 * @throws SalesforceSyncException
 	 */
-	public static function attemptSync($action, $objectName, $objects, $retryLimit=10, $attempts=[]) {
+	public function attemptSalesforceSync($action, $objects, $attempts=[]) {
 		try {
-			$result = Salesforce::$action($objects, $objectName);
+			$result = Salesforce::$action($objects, $this->objectName);
 		} catch(\SoapFault $exception) {
 			$error = new \stdClass();
 			$error->statusCode = 'SOAP_FAULT';
@@ -436,17 +450,17 @@ class SyncObject
 			$result->errors = [$error];
 			$result->message = $exception->faultstring;
 		}
-		if(!$retryLimit) {
-			return static::validateResult($result);
+		if(!$this->retry) {
+			return static::validateResult($result, $this, $objects);
 		}
 		if(!static::isSuccessfulResult($result)) {
-			if(count($attempts) < $retryLimit) {
+			if(count($attempts) < $this->retry) {
 				if(static::resultHasErrorCode($result, ['UNABLE_TO_LOCK_ROW', 'REQUEST_RUNNING_TOO_LONG', 'SOAP_FAULT'])) {
 					$attempts[] = $result;
-					return static::attemptSync($action, $objectName, $objects, $retryLimit, $attempts);
+					return $this->attemptSalesforceSync($action, $objects, $attempts);
 				}
 			}
-			throw new SalesforceSyncException($result, $attempts);
+			throw new SalesforceSyncException($result, $this, $objects, $attempts);
 		}
 		return $result;
 	}
@@ -454,14 +468,15 @@ class SyncObject
 	/**
 	 * Check to see if a Salesforce SaveResult has a specific error code or codes
 	 *
-	 * @param array $result
+	 * @param array|\stdClass $result
 	 * @param string|array $code
 	 * @return bool
 	 */
 	public static function resultHasErrorCode($result, $code) {
 		$codes = is_array($code) ? $code : [$code];
-		if(is_array($result) && count($codes)) {
-			foreach($result as $response) {
+		if(count($codes)) {
+			$results = is_array($result) ? $result : [$result];
+			foreach($results as $response) {
 				if(isset($response->errors) && is_array($response->errors)) {
 					foreach($response->errors as $error) {
 						if(in_array($error->statusCode, $codes)) {

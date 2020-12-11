@@ -7,16 +7,22 @@ use Exception;
 class SalesforceSyncException extends Exception
 {
 	public $result;
+	public $syncObject;
+	public $objects;
 	public $attempts;
 
 	/**
 	 * SalesforceSyncException constructor
 	 *
-	 * @param array $result
+	 * @param array|\stdClass $result
+	 * @param SyncObject $syncObject
+	 * @param array $objects
 	 * @param array $attempts
 	 */
-	public function __construct($result, $attempts=null) {
+	public function __construct($result, $syncObject=null, $objects=null, $attempts=null) {
 		$this->result = $result;
+		$this->syncObject = $syncObject;
+		$this->objects = $objects;
 		$this->attempts = $attempts;
 		parent::__construct('Salesforce Sync Failure: '.$this->getErrorMessage());
 	}
