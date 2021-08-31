@@ -365,6 +365,7 @@ class SyncObject
 				}
 			}
 			$this->pullOnlyFields = [];
+			$this->_remoteObject = null;
 			return $object;
 		}
 		return null;
