@@ -24,7 +24,8 @@
 
 namespace CEE\Salesforce;
 
-use Salesforce;
+use CEE\Salesforce\ForceDotCom\Results\BasicResult;
+use CEE\Salesforce\Laravel\Facades\Salesforce;
 
 class SyncObject
 {
@@ -386,7 +387,7 @@ class SyncObject
 	/**
 	 * Check if a Salesforce SaveResult has all successful responses
 	 *
-	 * @param array|\stdClass $result
+	 * @param array|\stdClass|BasicResult $result
 	 * @return bool
 	 */
 	public static function isSuccessfulResult($result) {
@@ -405,9 +406,9 @@ class SyncObject
 	/**
 	 * Throw an exception if a Salesforce SaveResult is not successful
 	 *
-	 * @param array|\stdClass $result
-	 * @param SyncObject $syncObject
-	 * @param array $objects
+	 * @param array|\stdClass|BasicResult $result
+	 * @param SyncObject|null $syncObject
+	 * @param array|null $objects
 	 * @return array
 	 * @throws SalesforceSyncException
 	 */
@@ -424,10 +425,10 @@ class SyncObject
 	 * @param string $objectName
 	 * @param array $objects
 	 * @param int $retryLimit
-	 * @return mixed
+	 * @return array|BasicResult|\stdClass
 	 * @throws SalesforceSyncException
 	 */
-	public static function attemptSync($action, $objectName, $objects, $retryLimit=10) {
+	public static function attemptSync( string $action, string $objectName, array $objects, int $retryLimit=10) {
 		return SyncObject::objectName($objectName)->retry($retryLimit)->attemptSalesforceSync($action, $objects);
 	}
 
@@ -437,10 +438,10 @@ class SyncObject
 	 * @param string $action
 	 * @param array $objects
 	 * @param array $attempts
-	 * @return mixed
+	 * @return array|BasicResult|\stdClass
 	 * @throws SalesforceSyncException
 	 */
-	public function attemptSalesforceSync($action, $objects, $attempts=[]) {
+	public function attemptSalesforceSync( string $action, array $objects, array $attempts=[]) {
 		try {
 			$result = Salesforce::$action($objects, $this->objectName);
 		} catch(\SoapFault $exception) {
@@ -469,7 +470,7 @@ class SyncObject
 	/**
 	 * Check to see if a Salesforce SaveResult has a specific error code or codes
 	 *
-	 * @param array|\stdClass $result
+	 * @param array|\stdClass|BasicResult $result
 	 * @param string|array $code
 	 * @return bool
 	 */

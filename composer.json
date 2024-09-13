@@ -21,6 +21,17 @@
     },
     "minimum-stability": "dev",
     "require": {
-        "davispeixoto/laravel5-salesforce": "~2.0"
+        "laravel/framework": "^9.0|^10.0|^11.0",
+        "ext-soap": "*"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "CEE\\Salesforce\\Laravel\\SalesforceServiceProvider"
+            ],
+            "aliases": {
+                "Salesforce": "CEE\\Salesforce\\Laravel\\Facades\\Salesforce"
+            }
+        }
     }
 }
