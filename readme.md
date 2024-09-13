@@ -1,41 +1,30 @@
 # Salesforce Sync
 
-This package is for syncing Salesforce objects with local data. It's an extension of Davis Peixoto's [Laravel 5 Salesforce](https://github.com/davispeixoto/Laravel-5-Salesforce) package.
+This package is for syncing Salesforce objects with local data in a Laravel app.
 
-Works with [Laravel 5.2](https://laravel.com/docs/) and up.
+Works with [Laravel 9, 10, and 11](https://laravel.com/docs/11.x).
+
+[*Use version `^1.0` for Laravel 5*](https://github.com/jwilson-cee/salesforce-sync/tree/v1.0.9)
 
 ## Installation
 
-This package can be installed via [Composer](http://getcomposer.org) by requiring the
-`mncee/salesforce-sync` package in your project's `composer.json`.
+This package can be installed via [Composer](http://getcomposer.org) by requiring the `mncee/salesforce-sync` package.
 
-```json
-{
-    "require": {
-        "mncee/salesforce-sync": "1.0.*"
-    }
-}
+```shell
+composer require mncee/salesforce-sync
 ```
 
-### Laravel 5 Configuration
+[*For Laravel 5*](https://github.com/jwilson-cee/salesforce-sync/tree/v1.0.9)
 
-To use the [Laravel 5 Salesforce](https://github.com/davispeixoto/Laravel-5-Salesforce) package, you must add the service provider and facade alias your Laravel 5 application.
-
-Find the `providers` key and `aliases` key in your `config/app.php` and add these corresponding lines.
-
-```php
-    'providers' => array(
-        // ...
-        Davispeixoto\Laravel5Salesforce\SalesforceServiceProvider::class,
-    )
-    
-    'aliases' => array(
-        // ...
-        'Salesforce' => Davispeixoto\Laravel5Salesforce\SalesforceFacade::class,
-    )
+```shell
+composer require mncee/salesforce-sync:^1.0
 ```
 
-Then you must include the following environment variables in the `.env` file:
+## Laravel Configuration
+
+### Environment Variables
+
+Include the following environment variables in the `.env` file:
 ```
 SALESFORCE_USERNAME=#your salesfore username#
 SALESFORCE_PASSWORD=#your salesfore password#
@@ -45,7 +34,65 @@ SALESFORCE_WSDL=#path to the wsdl stored in the storage/app/ directory#
 
 Place your [your **Enterprise** WSDL file](https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_quickstart_steps_generate_wsdl.htm) into your app `storage/app/` directory you specified in the `.env` file.
 
-**IMPORTANT:** the PHP Force.com Toolkit for PHP only works with Enterprise WSDL
+**IMPORTANT:** This package only works with Enterprise WSDL
+
+### Package Discovery
+
+This packages *Service Provider* and *Facade alias* should be auto-discovered when requiring it with `composer`.
+
+But if you need to add them manually, you can do so with the following instructions:
+
+#### For Laravel 11
+
+In the `bootstrap/providers.php` file add `CEE\Salesforce\Laravel\SalesforceServiceProvider::class` to the returned array.
+
+```php
+// bootstrap/providers.php
+
+return [
+    App\Providers\AppServiceProvider::class,
+    CEE\Salesforce\Laravel\SalesforceServiceProvider::class,
+];
+```
+
+In the `config/app.php` file add these corresponding lines to the returned array.
+
+```php
+// config/app.php
+
+return [
+    
+    //...
+    
+    'aliases' => Facade::defaultAliases()->merge([
+        'Salesforce' => \CEE\Salesforce\Laravel\Facades\Salesforce::class,
+    ])->toArray(),
+]
+```
+
+#### For Laravel 9 and 10
+
+Find the `providers` key and `aliases` key in your `config/app.php` and add these corresponding lines to the returned array.
+
+```php
+// config/app.php
+
+return [
+    
+    //...
+    
+    'providers' => [
+        // ...
+        CEE\Salesforce\Laravel\SalesforceServiceProvider::class,
+    ],
+    
+    'aliases' => [
+        // ...
+        'Salesforce' => \CEE\Salesforce\Laravel\Facades\Salesforce::class,
+    ],
+    
+];
+```
 
 ## The SyncObject Class
 This is the class to use for syncing local data with remote Salesforce objects.
